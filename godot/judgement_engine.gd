@@ -30,8 +30,18 @@ func _ready():
 
 func _on_region_clicked(region_name: String, category: String):
     # When a region is clicked on the map, we "roam" there.
-    # For now, let's assume we pick a random file in that category's path to judge.
     var path = _get_path_for_category(category)
+    
+    # Notify backend of roaming
+    var roam_data = {"path": path}
+    http_request.request("http://localhost:8010/dimension/roam", ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(roam_data))
+    
+    # Automatically declare an expectation based on category
+    var expectation_text = "I expect scripts related to " + region_name
+    var expect_data = {"expectation": expectation_text}
+    # Using a second request or sequential logic here... simplified:
+    # (In a full implementation we'd await the first or use a queue)
+    
     var files = _get_files_in_path(path)
     if files.size() > 0:
         _start_judgement(files[0]) # Start judging the first file found

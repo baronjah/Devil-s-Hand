@@ -40,6 +40,13 @@ A running ecosystem that:
 - **✨ Miracle It Away (Healing):** Takes broken code or messy prompts and "miracles" them into a structured, perfect state via the LLM (Cleansing the Scriptura).
 - **🛡️ Demonic Prevention (Prevention):** The Paranoia Agent scans for anomalies and strikes down "sinful" edits (breaking changes) before they can manifest in the story loop.
 
+## The Roaming Loop (Dimension Explorer)
+Devil's Hand can roam any directory on the computer (Dimensions):
+1.  **Roam:** Move the Hand's focus to a specific path.
+2.  **Expect:** Declare what *should* be there (e.g., "I expect a save system").
+3.  **Check:** Compare expectations against actual files.
+4.  **Reconstruct:** If the expectation is not met, the Hand "forges reality" by creating the missing pieces.
+
 ## Locked Decisions (Do Not Redesign)
 | Decision | Value |
 |----------|-------|

@@ -12,6 +12,7 @@ from basket_router import BasketRouter
 from save_system import SaveSystem
 from mode_manager import ModeManager
 from skill_forge import SkillForge
+from dimension_explorer import DimensionExplorer
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -28,6 +29,7 @@ class Ecosystem:
         self.save_system = SaveSystem(self.base_dir)
         self.mode_manager = ModeManager(initial_mode="sandbox")
         self.skill_forge = SkillForge(self)
+        self.explorer = DimensionExplorer(self)
         
         # Initialize structured state from Swiss Knife Schema
         self.state = self.save_system.create_empty_state("JSH")
@@ -261,6 +263,42 @@ def execute_prevention():
     result = E.skill_forge.demonic_prevention(target)
     push_event("skill_executed", result)
     return json.dumps({"ok": True, "result": result})
+
+@app.route('/dimension/roam', methods=['POST'])
+def roam_dimension():
+    data = request.json
+    path = data.get("path", "D:/")
+    if E.explorer.roam(path):
+        push_event("dimension_roamed", {"path": path})
+        return json.dumps({"ok": True, "path": path})
+    return json.dumps({"ok": False, "error": "Path not found"}), 404
+
+@app.route('/dimension/expect', methods=['POST'])
+def expect_dimension():
+    data = request.json
+    text = data.get("expectation", "something useful")
+    exp = E.explorer.declare_expectation(text)
+    E.explorer.check_reality()
+    push_event("expectation_declared", exp)
+    return json.dumps({"ok": True, "expectation": exp})
+
+@app.route('/dimension/status', methods=['GET'])
+def dimension_status():
+    E.explorer.check_reality()
+    return json.dumps({
+        "current_path": E.explorer.current_path,
+        "reality": E.explorer.reality,
+        "expectations": E.explorer.expectations
+    })
+
+@app.route('/dimension/reconstruct', methods=['POST'])
+def reconstruct_dimension():
+    data = request.json
+    exp_id = data.get("id")
+    if E.explorer.reconstruct(exp_id):
+        push_event("dimension_reconstructed", {"id": exp_id})
+        return json.dumps({"ok": True})
+    return json.dumps({"ok": False}), 500
 
 @app.route('/judgement/execute', methods=['POST'])
 def execute_judgement():

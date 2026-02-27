@@ -144,6 +144,22 @@
         <div style="position: absolute; top: 10px; left: 10px; pointer-events: none; text-shadow: 0 0 5px black;">Neural Net Visualizer (Disk History)</div>
     </div>
 
+    <div class="panel" id="dimension-panel">
+        <h2>Dimension Roamer</h2>
+        <div style="font-size: 0.9rem; margin-bottom: 10px;">Roaming: <span id="current-dim" style="color: var(--accent);">D:/</span></div>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <input type="text" id="roam-path" placeholder="Path to roam..." style="flex: 1; background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 5px;">
+            <button onclick="roam()" style="background: var(--accent); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">ROAM</button>
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <input type="text" id="expect-text" placeholder="I expect..." style="flex: 1; background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 5px;">
+            <button onclick="declareExpectation()" style="background: var(--ok); border: none; color: #080810; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">EXPECT</button>
+        </div>
+        <div id="expectations-list" style="font-size: 0.8rem; border-top: 1px solid #2a2a40; padding-top: 10px;">
+            Waiting for expectations...
+        </div>
+    </div>
+
     <div class="panel">
         <h2>Active Stories</h2>
         <ul id="stories-list">
@@ -380,6 +396,57 @@
                 body: JSON.stringify({mode: mode})
             });
         }
+
+        // --- Dimension Explorer API ---
+        function roam() {
+            const path = document.getElementById('roam-path').value;
+            fetch('http://localhost:8010/dimension/roam', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({path: path})
+            }).then(updateDimensionStatus);
+        }
+
+        function declareExpectation() {
+            const text = document.getElementById('expect-text').value;
+            fetch('http://localhost:8010/dimension/expect', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({expectation: text})
+            }).then(updateDimensionStatus);
+        }
+
+        function reconstruct(id) {
+            fetch('http://localhost:8010/dimension/reconstruct', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            }).then(updateDimensionStatus);
+        }
+
+        function updateDimensionStatus() {
+            fetch('http://localhost:8010/dimension/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('current-dim').textContent = data.current_path;
+                    const list = document.getElementById('expectations-list');
+                    list.innerHTML = '<strong>Expectations:</strong>';
+                    data.expectations.forEach(exp => {
+                        const item = document.createElement('div');
+                        const color = exp.status === 'met' ? 'var(--ok)' : 'var(--down)';
+                        item.style.marginBottom = '5px';
+                        item.innerHTML = `
+                            <span style="color: ${color}">[${exp.status.toUpperCase()}]</span> 
+                            ${exp.text} 
+                            ${exp.status === 'failed' ? `<button onclick="reconstruct('${exp.id}')" style="background: var(--accent); border:none; color:white; font-size:0.7rem; cursor:pointer;">RECONSTRUCT</button>` : ''}
+                        `;
+                        list.appendChild(item);
+                    });
+                });
+        }
+
+        setInterval(updateDimensionStatus, 5000); // Periodic refresh
+        updateDimensionStatus();
 
         function commitTurn() {
             fetch('http://localhost:8010/turn/commit', { method: 'POST' });
