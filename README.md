@@ -52,6 +52,14 @@ Time in Devil's Hand is governed by two archetypes:
 - **👼 Angel of Continuation:** Accepts the current state, commits it to history, and advances the timeline.
 - **👹 Demon of the Reset:** Rejects the current reality, triggers a rollback to the previous version, and restarts the current beat.
 
+## Multi-Dimensional Ports (Active Services)
+| Dimension | Port | Service | Purpose |
+|-----------|------|---------|---------|
+| **Devil's Hand** | **8010** | `devils_hand_main.py` | Unified Ecosystem Backend |
+| **Timer Game** | **8003** | `game.py` | Phone Decision Loop |
+| **Phone AI** | **8080** | `phone_ai.py` | Direct Mobile Chat |
+| **Brain Graph** | **8002** | `brain.py` | Neural Context Engine |
+
 ## Locked Decisions (Do Not Redesign)
 | Decision | Value |
 |----------|-------|
