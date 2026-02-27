@@ -160,6 +160,25 @@
         </div>
     </div>
 
+    <div class="panel">
+        <h2>Mode & Time Controls</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+            <button onclick="setMode('action')" style="background: var(--down); color: white; border: none; padding: 5px 10px; border-radius: 4px;">Action</button>
+            <button onclick="setMode('turn_based')" style="background: var(--accent); color: white; border: none; padding: 5px 10px; border-radius: 4px;">Turn-Based</button>
+            <button onclick="setMode('sandbox')" style="background: var(--ok); color: #080810; border: none; padding: 5px 10px; border-radius: 4px;">Sandbox</button>
+            <button onclick="setMode('rpg')" style="background: var(--user-blue); color: white; border: none; padding: 5px 10px; border-radius: 4px;">RPG</button>
+            <button onclick="setMode('survival')" style="background: #ff8800; color: #080810; border: none; padding: 5px 10px; border-radius: 4px;">Survival</button>
+        </div>
+        <div style="margin-bottom: 10px;">Current Mode: <span id="current-mode" style="color: var(--accent); font-weight: bold;">Loading...</span></div>
+        <div id="turn-controls" style="display: none; margin-bottom: 10px;">
+            <button onclick="commitTurn()" style="background: var(--ok); width: 100%; color: #080810; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">Commit Turn</button>
+        </div>
+        <div style="display: flex; gap: 10px; border-top: 1px solid #2a2a40; padding-top: 10px;">
+            <button onclick="saveState()" style="background: var(--panel-bg); color: var(--text); border: 1px solid var(--accent); padding: 5px 10px; border-radius: 4px; cursor: pointer; flex: 1;">Save State</button>
+            <button onclick="loadState()" style="background: var(--panel-bg); color: var(--text); border: 1px solid var(--ok); padding: 5px 10px; border-radius: 4px; cursor: pointer; flex: 1;">Load State</button>
+        </div>
+    </div>
+
     <div class="panel" id="judgement-panel">
         <h2>Final Judgement Day</h2>
         <div id="judgement-target">Target: <span id="target-file">None</span></div>
@@ -348,6 +367,57 @@
                 body: JSON.stringify({decision: decision})
             });
         }
+
+        // --- Mode & State API ---
+        function setMode(mode) {
+            fetch('http://localhost:8010/mode/set', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: mode})
+            });
+        }
+
+        function commitTurn() {
+            fetch('http://localhost:8010/turn/commit', { method: 'POST' });
+        }
+
+        function saveState() {
+            fetch('http://localhost:8010/state/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: 'manual_save'})
+            }).then(r => r.json()).then(d => {
+                if(d.ok) alert('Saved to: ' + d.file);
+            });
+        }
+
+        function loadState() {
+            fetch('http://localhost:8010/state/load', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: 'manual_save'})
+            }).then(r => r.json()).then(d => {
+                if(d.ok) alert('Loaded beat ' + d.state.beat_count);
+            });
+        }
+
+        es.addEventListener('mode_changed', e => {
+            const data = JSON.parse(e.data);
+            document.getElementById('current-mode').textContent = data.mode.toUpperCase();
+            document.getElementById('turn-controls').style.display = (data.mode === 'turn_based') ? 'block' : 'none';
+        });
+
+        es.addEventListener('state_loaded', e => {
+            const data = JSON.parse(e.data);
+            document.getElementById('current-mode').textContent = data.mode.toUpperCase();
+            document.getElementById('turn-controls').style.display = (data.mode === 'turn_based') ? 'block' : 'none';
+        });
+
+        // Initialize mode on load
+        fetch('http://localhost:8010/status').then(r => r.json()).then(d => {
+            document.getElementById('current-mode').textContent = d.mode.toUpperCase();
+            document.getElementById('turn-controls').style.display = (d.mode === 'turn_based') ? 'block' : 'none';
+        });
 
         es.addEventListener('skill_forged', e => {
             const skill = JSON.parse(e.data);

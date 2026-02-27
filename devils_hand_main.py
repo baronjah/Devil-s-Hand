@@ -9,6 +9,8 @@ from story_engine.version_tracker import VersionTracker
 from story_engine.paranoia_agent import ParanoiaAgent
 from prompt_ingest import PromptIngest
 from basket_router import BasketRouter
+from save_system import SaveSystem
+from mode_manager import ModeManager
 
 app = Flask(__name__)
 CORS(app)
@@ -21,11 +23,18 @@ class Ecosystem:
         self.pa = ParanoiaAgent([self.base_dir, "D:/godot_projects/fab"])
         self.ingestor = PromptIngest(self.base_dir)
         self.router = BasketRouter()
+        self.save_system = SaveSystem(self.base_dir)
+        self.mode_manager = ModeManager(initial_mode="sandbox")
         
         self.clients = []
         self.lock = threading.Lock()
         self.running = True
         self.status = "initializing"
+        
+        # Mode specific states
+        self.turn_committed = False
+        self.force_beat = False
+        self.resources = {"energy": 100}
         
         # Possession State
         self.controller = "j_s_hand" # "j_s_hand" (User) or "devil_s_hand" (AI)
@@ -67,7 +76,13 @@ def ecosystem_loop():
     print("Ecosystem: 🚂 Train loop started.")
     E.status = "running"
     
+    # Auto-save timer
+    last_save = time.time()
+    
     while E.running:
+        # Tick Rate determined by Mode
+        time.sleep(E.mode_manager.tick_rate)
+        
         # 1. Paranoia Check
         alerts = E.pa.check_integrity()
         for alert in alerts:
@@ -77,23 +92,37 @@ def ecosystem_loop():
                 E.vt.track_file(alert["path"])
         
         # 2. Heartbeat
-        push_event("pulse", {"node_id": "core", "t": time.time()})
+        push_event("pulse", {"node_id": "core", "t": time.time(), "mode": E.mode_manager.current_mode})
         
-        # 3. Simulate Story Progression (if no real intake)
-        if time.time() % 30 < 5: # Every 30s, do a beat
+        # 3. Apply Mode Rules (might halt further execution this tick)
+        if not E.mode_manager.process_loop_rules(E):
+            continue
+            
+        # 4. Simulate Story Progression (if auto-advance is on or forced)
+        if E.mode_manager.auto_advance_beats or E.force_beat:
             E.beat_count += 1
             push_event("story_beat", {
                 "story_id": E.story_id,
                 "beat": {
                     "beat_id": f"beat-{E.beat_count}",
-                    "scene": f"Ecosystem loop cycle {E.beat_count}: Monitoring dimensions...",
-                    "actors": ["DemonHand", "ParanoiaAgent"],
+                    "scene": f"Ecosystem loop cycle {E.beat_count}: Running in {E.mode_manager.current_mode.upper()} mode.",
+                    "actors": ["DemonHand"],
                     "timeline_index": E.beat_count,
                     "is_canon": True
                 }
             })
+            E.force_beat = False
             
-        time.sleep(5)
+        # 5. Auto-Save every 60 seconds
+        if time.time() - last_save > 60:
+            state_dict = {
+                "beat_count": E.beat_count,
+                "controller": E.controller,
+                "mode": E.mode_manager.current_mode,
+                "resources": E.resources
+            }
+            E.save_system.save_state(state_dict, save_name="train_auto")
+            last_save = time.time()
 
 # ─── API Endpoints ────────────────────────────────────────────────────────────
 @app.route('/events/stream')
@@ -117,10 +146,55 @@ def get_status():
     return json.dumps({
         "status": E.status,
         "controller": E.controller,
+        "mode": E.mode_manager.current_mode,
         "beat_count": E.beat_count,
         "files_monitored": len(E.pa.signatures),
         "total_versions": sum(len(v["versions"]) for v in E.vt.version_index.values())
     })
+
+@app.route('/mode/set', methods=['POST'])
+def set_mode():
+    data = request.json
+    new_mode = data.get("mode")
+    if E.mode_manager.set_mode(new_mode):
+        push_event("mode_changed", {"mode": new_mode})
+        return json.dumps({"ok": True, "mode": new_mode})
+    return json.dumps({"ok": False, "error": "Invalid mode"}), 400
+
+@app.route('/turn/commit', methods=['POST'])
+def commit_turn():
+    E.turn_committed = True
+    E.force_beat = True # Force a beat generation
+    return json.dumps({"ok": True})
+
+@app.route('/state/save', methods=['POST'])
+def save_state():
+    data = request.json
+    name = data.get("name", "manual_save")
+    state_dict = {
+        "beat_count": E.beat_count,
+        "controller": E.controller,
+        "mode": E.mode_manager.current_mode,
+        "resources": E.resources
+    }
+    filepath = E.save_system.save_state(state_dict, save_name=name, tag="manual")
+    if filepath:
+        return json.dumps({"ok": True, "file": filepath})
+    return json.dumps({"ok": False}), 500
+
+@app.route('/state/load', methods=['POST'])
+def load_state():
+    data = request.json
+    name = data.get("name", "manual_save")
+    state = E.save_system.load_latest(save_name=name)
+    if state:
+        E.beat_count = state.get("beat_count", 0)
+        E.controller = state.get("controller", "j_s_hand")
+        E.mode_manager.set_mode(state.get("mode", "sandbox"))
+        E.resources = state.get("resources", {"energy": 100})
+        push_event("state_loaded", state)
+        return json.dumps({"ok": True, "state": state})
+    return json.dumps({"ok": False, "error": "Save not found"}), 404
 
 @app.route('/prompt/ingest', methods=['POST'])
 def ingest_prompt():
