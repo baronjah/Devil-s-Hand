@@ -11,6 +11,7 @@ from prompt_ingest import PromptIngest
 from basket_router import BasketRouter
 from save_system import SaveSystem
 from mode_manager import ModeManager
+from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
 CORS(app)
@@ -25,6 +26,9 @@ class Ecosystem:
         self.router = BasketRouter()
         self.save_system = SaveSystem(self.base_dir)
         self.mode_manager = ModeManager(initial_mode="sandbox")
+        
+        # Initialize structured state from Swiss Knife Schema
+        self.state = self.save_system.create_empty_state("JSH")
         
         self.clients = []
         self.lock = threading.Lock()
@@ -213,11 +217,29 @@ def ingest_prompt():
             "prompt_id": log["prompt_id"],
             "structured": structured
         })
+        
+        # Log to timeline
+        event = SwissKnifeSchema.create_timeline_event("JSH", "INGEST_PROMPT", log["prompt_id"])
+        event["after"] = structured
+        E.state["timeline"].append(event)
+        
         print(f"Ecosystem: Intent routed -> {structured.get('intent')}")
 
     threading.Thread(target=process, daemon=True).start()
     
     return json.dumps({"ok": True, "prompt_id": log["prompt_id"]})
+
+@app.route('/branch/create', methods=['POST'])
+def create_branch():
+    data = request.json
+    label = data.get("label", "New Branch")
+    b_type = data.get("type", "LOGIC_BLOCK")
+    
+    node = SwissKnifeSchema.create_branch_node(label, b_type)
+    E.state["branches"][node["branch_id"]] = node
+    
+    push_event("branch_created", node)
+    return json.dumps({"ok": True, "branch": node})
 
 @app.route('/judgement/execute', methods=['POST'])
 def execute_judgement():

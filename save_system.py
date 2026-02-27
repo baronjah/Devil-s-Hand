@@ -3,11 +3,13 @@ import json
 import shutil
 import time
 from datetime import datetime
+from schemas.swiss_knife_schema import SwissKnifeSchema
 
 class SaveSystem:
     """
     Manages the JSON-first archive/chunk/cache lifecycle for Devil's Hand.
     Handles saving, loading, and archiving ecosystem states.
+    Uses SwissKnifeSchema for structured payloads.
     """
     def __init__(self, base_dir="D:/devil_s_hand"):
         self.snapshots_dir = os.path.join(base_dir, "snapshots")
@@ -16,6 +18,9 @@ class SaveSystem:
         for d in [self.snapshots_dir, self.archive_dir]:
             if not os.path.exists(d):
                 os.makedirs(d)
+
+    def create_empty_state(self, user_id="JSH"):
+        return SwissKnifeSchema.create_save_payload(user_id)
 
     def save_state(self, state_dict, save_name="auto_save", tag="runtime"):
         """Saves a JSON snapshot of the ecosystem."""
