@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devil's Hand - Dashboard</title>
+    <style>
+        :root {
+            --bg: #080810;
+            --panel-bg: #121220;
+            --accent: #7c6af7;
+            --text: #e0e0ff;
+            --ok: #00ff88;
+            --degraded: #ffcc00;
+            --down: #ff4444;
+            --user-blue: #0088ff;
+            --ai-purple: #9d00ff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #2a2a40;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            color: var(--accent);
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #2a2a40;
+            padding-bottom: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-color: var(--ok);
+            box-shadow: 0 0 8px var(--ok);
+        }
+
+        .dot.degraded { background-color: var(--degraded); box-shadow: 0 0 8px var(--degraded); }
+        .dot.down { background-color: var(--down); box-shadow: 0 0 8px var(--down); }
+
+        #timer-container {
+            height: 10px;
+            background: #1a1a30;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent);
+            transition: width 0.1s linear;
+        }
+
+        .owner-user #timer-bar { background-color: var(--user-blue); }
+        .owner-ai #timer-bar { background-color: var(--ai-purple); }
+
+        #override-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: var(--down);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
+            animation: flash 0.5s infinite alternate;
+        }
+
+        @keyframes flash {
+            from { opacity: 1; }
+            to { opacity: 0.5; }
+        }
+
+        .pulse-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .pulse-flash { animation: pulse-anim 0.3s ease-out; }
+
+        @keyframes pulse-anim {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(3); }
+        }
+
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 8px; font-size: 0.9rem; }
+    </style>
+</head>
+<body class="owner-user">
+    <div id="override-banner">USER OVERRIDE ACTIVE</div>
+
+    <div class="panel">
+        <h2>Ecosystem Health</h2>
+        <div id="health-list">
+            <div class="status-item"><div class="dot" id="dot-main"></div> <span>Main Ecosystem</span></div>
+            <div class="status-item"><div class="dot" id="dot-story"></div> <span>Story Engine</span></div>
+            <div class="status-item"><div class="dot" id="dot-paranoia"></div> <span>Paranoia Agent</span></div>
+        </div>
+        <div id="alerts-log" style="margin-top: 15px; font-size: 0.8rem; color: var(--down); max-height: 100px; overflow-y: auto;">
+            Waiting for paranoia scan...
+        </div>
+    </div>
+
+    <div class="panel" id="visualizer-panel" style="grid-column: span 2; height: 300px; padding: 0; position: relative;">
+        <div id="neural-net-canvas" style="width: 100%; height: 100%;"></div>
+        <div style="position: absolute; top: 10px; left: 10px; pointer-events: none; text-shadow: 0 0 5px black;">Neural Net Visualizer (Disk History)</div>
+    </div>
+
+    <div class="panel">
+        <h2>Active Stories</h2>
+        <ul id="stories-list">
+            <li>No active stories</li>
+        </ul>
+    </div>
+
+    <div class="panel">
+        <h2>Possession State</h2>
+        <div id="possession-info">
+            <div>Current Controller: <span id="controller-val">None</span></div>
+            <div>Turn Owner: <span id="owner-val">None</span></div>
+            <div id="timer-container"><div id="timer-bar"></div></div>
+        </div>
+    </div>
+
+    <div class="panel" id="judgement-panel">
+        <h2>Final Judgement Day</h2>
+        <div id="judgement-target">Target: <span id="target-file">None</span></div>
+        <div id="confession-session" style="height: 200px; overflow-y: auto; border: 1px solid #2a2a40; padding: 10px; margin: 10px 0; font-style: italic; font-family: 'Georgia', serif;">
+            Select a dimension to begin the confession...
+        </div>
+        <div style="display: flex; justify-content: space-around;">
+            <button onclick="judge('purge')" style="background: var(--down); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">PURGE</button>
+            <button onclick="judge('redeem')" style="background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">REDEEM</button>
+            <button onclick="judge('cleanse')" style="background: var(--ok); color: #080810; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">CLEANSE</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Skill Library</h2>
+        <ul id="skills-list">
+            <li>Standard Move</li>
+            <li>Basic Strike</li>
+        </ul>
+    </div>
+
+    <div class="panel">
+        <h2>Control Queue</h2>
+        <ul id="control-queue">
+            <li>Queue Empty</li>
+        </ul>
+    </div>
+
+    <div id="pulse-node" class="pulse-indicator"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const es = new EventSource('http://localhost:8010/events/stream');
+        
+        // --- Three.js Neural Net Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 600 / 300, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        const container = document.getElementById('neural-net-canvas');
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const nodes = [];
+        const edges = [];
+        const nodeGroup = new THREE.Group();
+        scene.add(nodeGroup);
+
+        function addNode(x, y, z, color = 0x7c6af7) {
+            const geo = new THREE.SphereGeometry(0.1, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            nodeGroup.add(mesh);
+            nodes.push(mesh);
+            return mesh;
+        }
+
+        // Random initial nodes
+        for(let i=0; i<20; i++) {
+            addNode((Math.random()-0.5)*5, (Math.random()-0.5)*5, (Math.random()-0.5)*5);
+        }
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            nodeGroup.rotation.y += 0.002;
+            nodeGroup.rotation.x += 0.001;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // --- SSE Event Listeners ---
+        let timerInterval = null;
+        let turnStartTime = 0;
+        let turnDuration = 0;
+
+        function updateTimer() {
+            if (!turnStartTime) return;
+            const elapsed = Date.now() - turnStartTime;
+            const percent = Math.min(100, (elapsed / turnDuration) * 100);
+            document.getElementById('timer-bar').style.width = percent + '%';
+        }
+
+        es.addEventListener('story_beat', e => {
+            const data = JSON.parse(e.data);
+            const list = document.getElementById('stories-list');
+            list.innerHTML = `<li>Story: ${data.story_id}</li><li>Beat: ${data.beat.beat_id}</li><li>Scene: ${data.beat.scene}</li>`;
+        });
+
+        es.addEventListener('possession', e => {
+            const state = JSON.parse(e.data);
+            document.getElementById('controller-val').textContent = state.controller;
+            document.getElementById('owner-val').textContent = state.turn_owner;
+            document.body.className = 'owner-' + state.turn_owner;
+            
+            turnStartTime = Date.now();
+            turnDuration = state.turn_duration_ms;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 100);
+        });
+
+        es.addEventListener('turn_start', e => {
+            const data = JSON.parse(e.data);
+            turnStartTime = Date.now();
+            turnDuration = data.duration_ms;
+            document.body.className = 'owner-' + data.owner;
+        });
+
+        es.addEventListener('turn_end', e => {
+            clearInterval(timerInterval);
+            document.getElementById('timer-bar').style.width = '0%';
+        });
+
+        es.addEventListener('override', e => {
+            const banner = document.getElementById('override-banner');
+            banner.style.display = 'block';
+            setTimeout(() => banner.style.display = 'none', 3000);
+        });
+
+        es.addEventListener('subsystem_down', e => {
+            const data = JSON.parse(e.data);
+            // Simple mapping for demo
+            if (data.name === 'VisionNode') {
+                document.getElementById('dot-story').className = 'dot down';
+            }
+        });
+
+        es.addEventListener('paranoia_alert', e => {
+            const data = JSON.parse(e.data);
+            const log = document.getElementById('alerts-log');
+            const item = document.createElement('div');
+            item.innerHTML = `[${data.severity.toUpperCase()}] ${data.msg}`;
+            log.prepend(item);
+            
+            if (data.severity === 'critical') {
+                document.getElementById('dot-paranoia').className = 'dot down';
+                // Flash a node red
+                const node = nodes[Math.floor(Math.random() * nodes.length)];
+                node.material.color.set(0xff4444);
+                setTimeout(() => node.material.color.set(0x7c6af7), 1000);
+            }
+        });
+
+        es.addEventListener('pulse', e => {
+            const pulseNode = document.getElementById('pulse-node');
+            pulseNode.classList.remove('pulse-flash');
+            void pulseNode.offsetWidth; // Trigger reflow
+            pulseNode.classList.add('pulse-flash');
+
+            // Flash a random 3D node
+            const node = nodes[Math.floor(Math.random() * nodes.length)];
+            node.scale.set(2, 2, 2);
+            setTimeout(() => node.scale.set(1, 1, 1), 200);
+        });
+
+        es.addEventListener('confession', e => {
+            const data = JSON.parse(e.data);
+            document.getElementById('target-file').textContent = data.file_path;
+            const session = document.getElementById('confession-session');
+            session.innerHTML = `<p>${data.confession.replace(/\n/g, '<br>')}</p>`;
+            session.scrollTop = 0;
+        });
+
+        es.addEventListener('judgement_result', e => {
+            const data = JSON.parse(e.data);
+            const banner = document.getElementById('override-banner');
+            banner.textContent = `JUDGEMENT EXECUTED: ${data.decision.toUpperCase()}`;
+            banner.style.display = 'block';
+            banner.style.background = data.decision === 'purge' ? 'var(--down)' : 'var(--ok)';
+            setTimeout(() => banner.style.display = 'none', 3000);
+        });
+
+        function judge(decision) {
+            console.log('Judging:', decision);
+            // In a real implementation, we'd POST to /judgement/execute
+            fetch('http://localhost:8010/judgement/execute', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({decision: decision})
+            });
+        }
+
+        es.addEventListener('skill_forged', e => {
+            const skill = JSON.parse(e.data);
+            const list = document.getElementById('skills-list');
+            const li = document.createElement('li');
+            li.textContent = skill.name;
+            list.appendChild(li);
+        });
+
+        // Heartbeat to keep iOS alive
+        setInterval(() => {
+            console.log('Heartbeat...');
+        }, 5000);
+
+    </script>
+</body>
+</html>

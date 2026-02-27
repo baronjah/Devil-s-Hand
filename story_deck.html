@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devil's Hand - Story Deck</title>
+    <style>
+        :root {
+            --bg: #05050a;
+            --text: #ffffff;
+            --accent: #7c6af7;
+            --canon: #00ff88;
+            --branch: #7c6af7;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #scene-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        #scene-text {
+            font-size: 2.5rem;
+            line-height: 1.4;
+            max-width: 900px;
+            margin-bottom: 40px;
+            transition: opacity 0.5s ease;
+        }
+
+        #actors-list {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #timeline-container {
+            height: 80px;
+            background: rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        #timeline-bar {
+            height: 4px;
+            width: 100%;
+            background: #333;
+            position: relative;
+        }
+
+        .beat-marker {
+            position: absolute;
+            top: -4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--canon);
+            transform: translateX(-50%);
+        }
+
+        .beat-marker.branch {
+            background: var(--branch);
+            border: 2px dashed #fff;
+        }
+
+        #current-pos {
+            position: absolute;
+            top: -10px;
+            width: 4px;
+            height: 24px;
+            background: white;
+            box-shadow: 0 0 10px white;
+            z-index: 10;
+            transform: translateX(-50%);
+            transition: left 0.3s ease-out;
+        }
+
+        #nav-controls {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .nav-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(124, 106, 247, 0.2);
+            border: 2px solid var(--accent);
+            color: white;
+            font-size: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+        }
+
+        .nav-btn:active { background: var(--accent); }
+
+    </style>
+</head>
+<body>
+    <div id="scene-container">
+        <div id="scene-text">Awaiting transmission...</div>
+        <div id="actors-list"></div>
+    </div>
+
+    <div id="nav-controls">
+        <div class="nav-btn" id="prev-btn">←</div>
+        <div class="nav-btn" id="next-btn">→</div>
+    </div>
+
+    <div id="timeline-container">
+        <div id="timeline-bar">
+            <div id="current-pos" style="left: 0%;"></div>
+            <!-- Markers will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const es = new EventSource('http://localhost:8010/events/stream');
+        let currentBeatIndex = 0;
+        let totalBeats = 10; // Mock total
+
+        function updateDisplay(beat) {
+            const textEl = document.getElementById('scene-text');
+            textEl.style.opacity = 0;
+            
+            setTimeout(() => {
+                textEl.textContent = beat.scene;
+                textEl.style.opacity = 1;
+                document.getElementById('actors-list').textContent = beat.actors.join(' • ');
+                
+                const posPercent = (beat.timeline_index / totalBeats) * 100;
+                document.getElementById('current-pos').style.left = posPercent + '%';
+            }, 500);
+        }
+
+        es.addEventListener('story_beat', e => {
+            const data = JSON.parse(e.data);
+            updateDisplay(data.beat);
+            
+            // Add marker to timeline
+            const marker = document.createElement('div');
+            marker.className = 'beat-marker' + (data.beat.is_canon ? '' : ' branch');
+            marker.style.left = (data.beat.timeline_index / totalBeats) * 100 + '%';
+            document.getElementById('timeline-bar').appendChild(marker);
+        });
+
+        // Keyboard support
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextBeat();
+            if (e.key === 'ArrowLeft') prevBeat();
+        });
+
+        function nextBeat() {
+            console.log('Next beat requested');
+            // In a real app, we'd POST to /story/{id}/advance
+        }
+
+        function prevBeat() {
+            console.log('Prev beat requested');
+        }
+
+        document.getElementById('next-btn').onclick = nextBeat;
+        document.getElementById('prev-btn').onclick = prevBeat;
+
+    </script>
+</body>
+</html>

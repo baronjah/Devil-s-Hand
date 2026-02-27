@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SkillManifest",
+  "type": "object",
+  "required": ["skill_id", "name", "version", "schema_version", "checksum"],
+  "properties": {
+    "skill_id":       {"type": "string"},
+    "name":           {"type": "string"},
+    "version":        {"type": "string"},
+    "schema_version": {"type": "string", "const": "1"},
+    "story_roles":    {"type": "array", "items": {"type": "string"}},
+    "actions":        {"type": "array"},
+    "visual_profile": {
+      "type": "object",
+      "properties": {
+        "theme":           {"type": "string"},
+        "primary_color":   {"type": "string"},
+        "animation_hint":  {"type": "string"},
+        "preview_frame":   {"type": "integer"}
+      }
+    },
+    "dependencies":   {"type": "array", "items": {"type": "string"}},
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "godot":      {"type": "string"},
+        "dh_version": {"type": "string"}
+      }
+    },
+    "checksum": {"type": "string"}
+  }
+}
