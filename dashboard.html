@@ -160,6 +160,17 @@
         </div>
     </div>
 
+    <div class="panel" id="multiverse-panel">
+        <h2>Multiverse Manager</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="fork-name" placeholder="Name this reality..." style="background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 8px; border-radius: 4px;">
+            <button onclick="forkReality()" style="background: linear-gradient(45deg, #ffcc00, var(--accent)); color: #080810; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">🔱 FORK REALITY</button>
+        </div>
+        <div id="branch-list" style="margin-top: 15px; font-size: 0.7rem; color: var(--muted); max-height: 80px; overflow-y: auto;">
+            Loading physical branches...
+        </div>
+    </div>
+
     <div class="panel" id="spirit-panel">
         <h2>Spirit of Time</h2>
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -495,6 +506,37 @@
                 body: JSON.stringify(body)
             });
         }
+
+        // --- Multiverse Manager API ---
+        function forkReality() {
+            const name = document.getElementById('fork-name').value || 'New Reality';
+            fetch('http://localhost:8010/branch/fork', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            }).then(r => r.json()).then(d => {
+                if(d.ok) {
+                    alert('Reality Forked: ' + d.branch_path);
+                    updateBranchList();
+                }
+            });
+        }
+
+        function updateBranchList() {
+            fetch('http://localhost:8010/branch/list')
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('branch-list');
+                    list.innerHTML = '<strong>Physical Branches:</strong>';
+                    data.forEach(b => {
+                        const item = document.createElement('div');
+                        item.textContent = '📂 ' + b;
+                        list.appendChild(item);
+                    });
+                });
+        }
+
+        updateBranchList();
 
         es.addEventListener('spirit_action', e => {
             const data = JSON.parse(e.data);

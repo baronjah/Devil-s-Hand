@@ -52,6 +52,12 @@ Time in Devil's Hand is governed by two archetypes:
 - **👼 Angel of Continuation:** Accepts the current state, commits it to history, and advances the timeline.
 - **👹 Demon of the Reset:** Rejects the current reality, triggers a rollback to the previous version, and restarts the current beat.
 
+## The Multiverse (Physical Branching)
+Devil's Hand can fork its own reality into new folders on the drive:
+- **Forking:** Clones the core logic and scripts into `D:\devil_s_hand\branches\{name}_{timestamp}\`.
+- **Isolation:** Each physical branch runs its own scripts and can be modified without affecting the "Main Timeline."
+- **Evolution:** Allows testing different "Special Case" architectures in parallel dimensions.
+
 ## Multi-Dimensional Ports (Active Services)
 | Dimension | Port | Service | Purpose |
 |-----------|------|---------|---------|

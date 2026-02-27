@@ -15,6 +15,7 @@ from skill_forge import SkillForge
 from dimension_explorer import DimensionExplorer
 from story_runtime import StoryRuntime
 from skill_execution import SkillExecution
+from branch_manager import BranchManager
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -34,6 +35,7 @@ class Ecosystem:
         self.explorer = DimensionExplorer(self)
         self.story_runtime = StoryRuntime(self)
         self.skill_exec = SkillExecution(self)
+        self.branch_manager = BranchManager(self.base_dir)
         
         self.clients = []
         self.lock = threading.Lock()
@@ -251,6 +253,20 @@ def create_branch():
     
     push_event("branch_created", node)
     return json.dumps({"ok": True, "branch": node})
+
+@app.route('/branch/fork', methods=['POST'])
+def fork_reality():
+    data = request.json
+    name = data.get("name", "Unnamed Fork")
+    result = E.branch_manager.fork_branch(name)
+    if result["ok"]:
+        push_event("reality_forked", result)
+        return json.dumps(result)
+    return json.dumps(result), 500
+
+@app.route('/branch/list', methods=['GET'])
+def list_physical_branches():
+    return json.dumps(E.branch_manager.list_branches())
 
 @app.route('/skill/miracle', methods=['POST'])
 def execute_miracle():
