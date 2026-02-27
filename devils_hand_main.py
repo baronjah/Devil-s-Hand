@@ -13,6 +13,7 @@ from save_system import SaveSystem
 from mode_manager import ModeManager
 from skill_forge import SkillForge
 from dimension_explorer import DimensionExplorer
+from story_runtime import StoryRuntime
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ class Ecosystem:
         self.mode_manager = ModeManager(initial_mode="sandbox")
         self.skill_forge = SkillForge(self)
         self.explorer = DimensionExplorer(self)
+        self.story_runtime = StoryRuntime(self)
         
         # Initialize structured state from Swiss Knife Schema
         self.state = self.save_system.create_empty_state("JSH")
@@ -299,6 +301,21 @@ def reconstruct_dimension():
         push_event("dimension_reconstructed", {"id": exp_id})
         return json.dumps({"ok": True})
     return json.dumps({"ok": False}), 500
+
+@app.route('/runtime/angel/continue', methods=['POST'])
+def angel_continue():
+    data = request.json or {}
+    result = E.story_runtime.angel_continue(data)
+    push_event("spirit_action", result)
+    return json.dumps({"ok": True, "result": result})
+
+@app.route('/runtime/demon/reset', methods=['POST'])
+def demon_reset():
+    data = request.json or {}
+    target = data.get("target_file")
+    result = E.story_runtime.demon_reset(target)
+    push_event("spirit_action", result)
+    return json.dumps({"ok": True, "result": result})
 
 @app.route('/judgement/execute', methods=['POST'])
 def execute_judgement():

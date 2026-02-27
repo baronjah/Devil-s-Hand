@@ -160,6 +160,21 @@
         </div>
     </div>
 
+    <div class="panel" id="spirit-panel">
+        <h2>Spirit of Time</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="spiritAction('angel')" style="background: #ffffff; color: #000000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                👼 ANGEL: CONTINUE ARC
+            </button>
+            <button onclick="spiritAction('demon')" style="background: #000000; color: #ff4444; border: 1px solid #ff4444; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                👹 DEMON: TURN BACK
+            </button>
+        </div>
+        <div id="spirit-status" style="margin-top: 15px; font-size: 0.8rem; text-align: center; font-style: italic; color: var(--accent);">
+            The timeline flows steadily...
+        </div>
+    </div>
+
     <div class="panel">
         <h2>Active Stories</h2>
         <ul id="stories-list">
@@ -447,6 +462,34 @@
 
         setInterval(updateDimensionStatus, 5000); // Periodic refresh
         updateDimensionStatus();
+
+        // --- Spirit of Time API ---
+        function spiritAction(spirit) {
+            const endpoint = spirit === 'angel' ? '/runtime/angel/continue' : '/runtime/demon/reset';
+            const body = spirit === 'demon' ? { target_file: 'D:/devil_s_hand/devils_hand_main.py' } : {};
+            
+            fetch('http://localhost:8010' + endpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+        }
+
+        es.addEventListener('spirit_action', e => {
+            const data = JSON.parse(e.data);
+            const status = document.getElementById('spirit-status');
+            status.textContent = data.msg;
+            status.style.color = data.spirit === 'angel' ? 'var(--ok)' : 'var(--down)';
+            
+            if (data.spirit === 'demon') {
+                // Flash neural net red
+                nodes.forEach(n => {
+                    const oldCol = n.material.color.getHex();
+                    n.material.color.set(0xff0000);
+                    setTimeout(() => n.material.color.set(oldCol), 1000);
+                });
+            }
+        });
 
         function commitTurn() {
             fetch('http://localhost:8010/turn/commit', { method: 'POST' });

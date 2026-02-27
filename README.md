@@ -47,6 +47,11 @@ Devil's Hand can roam any directory on the computer (Dimensions):
 3.  **Check:** Compare expectations against actual files.
 4.  **Reconstruct:** If the expectation is not met, the Hand "forges reality" by creating the missing pieces.
 
+## The Spirit of Time (Story Runtime)
+Time in Devil's Hand is governed by two archetypes:
+- **👼 Angel of Continuation:** Accepts the current state, commits it to history, and advances the timeline.
+- **👹 Demon of the Reset:** Rejects the current reality, triggers a rollback to the previous version, and restarts the current beat.
+
 ## Locked Decisions (Do Not Redesign)
 | Decision | Value |
 |----------|-------|
