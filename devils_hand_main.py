@@ -11,6 +11,7 @@ from prompt_ingest import PromptIngest
 from basket_router import BasketRouter
 from save_system import SaveSystem
 from mode_manager import ModeManager
+from skill_forge import SkillForge
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -26,6 +27,7 @@ class Ecosystem:
         self.router = BasketRouter()
         self.save_system = SaveSystem(self.base_dir)
         self.mode_manager = ModeManager(initial_mode="sandbox")
+        self.skill_forge = SkillForge(self)
         
         # Initialize structured state from Swiss Knife Schema
         self.state = self.save_system.create_empty_state("JSH")
@@ -240,6 +242,25 @@ def create_branch():
     
     push_event("branch_created", node)
     return json.dumps({"ok": True, "branch": node})
+
+@app.route('/skill/miracle', methods=['POST'])
+def execute_miracle():
+    data = request.json
+    target = data.get("target_id")
+    raw = data.get("raw_input", "")
+    
+    result = E.skill_forge.miracle_it_away(target, raw)
+    push_event("skill_executed", result)
+    return json.dumps({"ok": True, "result": result})
+
+@app.route('/skill/prevent', methods=['POST'])
+def execute_prevention():
+    data = request.json
+    target = data.get("target_path")
+    
+    result = E.skill_forge.demonic_prevention(target)
+    push_event("skill_executed", result)
+    return json.dumps({"ok": True, "result": result})
 
 @app.route('/judgement/execute', methods=['POST'])
 def execute_judgement():

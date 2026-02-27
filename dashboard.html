@@ -194,6 +194,10 @@
 
     <div class="panel">
         <h2>Skill Library</h2>
+        <div id="philosophical-skills" style="margin-bottom: 15px;">
+            <button onclick="executeSkill('miracle')" style="background: linear-gradient(45deg, var(--grn), var(--cyn)); color: #080810; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 8px;">✨ Miracle It Away</button>
+            <button onclick="executeSkill('prevent')" style="background: linear-gradient(45deg, var(--red), var(--ai-purple)); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">🛡️ Demonic Prevention</button>
+        </div>
         <ul id="skills-list">
             <li>Standard Move</li>
             <li>Basic Strike</li>
@@ -398,6 +402,22 @@
                 body: JSON.stringify({name: 'manual_save'})
             }).then(r => r.json()).then(d => {
                 if(d.ok) alert('Loaded beat ' + d.state.beat_count);
+            });
+        }
+
+        function executeSkill(skill) {
+            const target = prompt('Enter Target (ID or Path):', 'D:/devil_s_hand/devils_hand_main.py');
+            if(!target) return;
+            
+            const endpoint = skill === 'miracle' ? '/skill/miracle' : '/skill/prevent';
+            const body = skill === 'miracle' ? { target_id: target, raw_input: 'Please fix this script' } : { target_path: target };
+
+            fetch('http://localhost:8010' + endpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            }).then(r => r.json()).then(d => {
+                console.log('Skill Executed:', d);
             });
         }
 

@@ -36,6 +36,10 @@ A running ecosystem that:
 - Packages story moments as reusable visual skills (`.dhskill.zip`)
 - Shows everything in Godot (3D stage) and browser (dashboard + deck) simultaneously
 
+## Philosophical Skills (Cursor AI Reconstructed)
+- **✨ Miracle It Away (Healing):** Takes broken code or messy prompts and "miracles" them into a structured, perfect state via the LLM (Cleansing the Scriptura).
+- **🛡️ Demonic Prevention (Prevention):** The Paranoia Agent scans for anomalies and strikes down "sinful" edits (breaking changes) before they can manifest in the story loop.
+
 ## Locked Decisions (Do Not Redesign)
 | Decision | Value |
 |----------|-------|
