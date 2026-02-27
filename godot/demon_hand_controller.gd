@@ -12,9 +12,30 @@ enum Mode { DEMON, GOD }
 
 var current_state = State.IDLE
 var current_mode = Mode.DEMON
+var _time: float = 0.0
 
 func _ready():
     _update_visuals()
+
+func _process(delta: float):
+    _time += delta
+    if current_state == State.IDLE:
+        _animate_idle_math(delta)
+
+func _animate_idle_math(delta: float):
+    # Lissajous Curve Idle (Math-driven life)
+    # x = A sin(at + delta), y = B sin(bt)
+    var a = 1.0
+    var b = 2.0
+    var x = sin(a * _time) * 0.2
+    var y = sin(b * _time) * 0.1
+    var z = cos(a * _time) * 0.1
+    
+    global_position += Vector3(x, y, z) * delta
+    
+    # Fibonacci Pulse (1.0 -> 1.618)
+    var pulse = 1.0 + (abs(sin(_time * 0.5)) * 0.618)
+    scale = Vector3(pulse, pulse, pulse)
 
 func set_mode(mode: Mode):
     current_mode = mode

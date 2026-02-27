@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DevilsHandWorkerContract",
+  "type": "object",
+  "required": ["worker_id", "language", "capabilities", "status"],
+  "properties": {
+    "worker_id": {"type": "string"},
+    "language": {"type": "string"},
+    "capabilities": {"type": "array", "items": {"type": "string"}},
+    "heartbeat_ts": {"type": "integer"},
+    "status": {"type": "string", "enum": ["online", "offline", "degraded"]}
+  }
+}

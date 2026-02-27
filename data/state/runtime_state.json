@@ -1,0 +1,11 @@
+﻿{
+  "running": false,
+  "paused": false,
+  "simulation_mode": true,
+  "phase_gate_passed": false,
+  "theme": "default_infernal",
+  "story_ids": [],
+  "control_queue": [],
+  "skills": [],
+  "updated_ms": 0
+}
