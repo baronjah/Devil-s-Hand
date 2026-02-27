@@ -7,6 +7,8 @@ from flask_cors import CORS
 
 from story_engine.version_tracker import VersionTracker
 from story_engine.paranoia_agent import ParanoiaAgent
+from prompt_ingest import PromptIngest
+from basket_router import BasketRouter
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +19,9 @@ class Ecosystem:
         self.base_dir = "D:/devil_s_hand"
         self.vt = VersionTracker(self.base_dir, os.path.join(self.base_dir, "history"))
         self.pa = ParanoiaAgent([self.base_dir, "D:/godot_projects/fab"])
+        self.ingestor = PromptIngest(self.base_dir)
+        self.router = BasketRouter()
+        
         self.clients = []
         self.lock = threading.Lock()
         self.running = True
@@ -116,6 +121,29 @@ def get_status():
         "files_monitored": len(E.pa.signatures),
         "total_versions": sum(len(v["versions"]) for v in E.vt.version_index.values())
     })
+
+@app.route('/prompt/ingest', methods=['POST'])
+def ingest_prompt():
+    data = request.json
+    raw_text = data.get("prompt", "")
+    source = data.get("source", "web_interface")
+    
+    # 1. Physical Ingest
+    log = E.ingestor.ingest(raw_text, source)
+    
+    # 2. Basket Routing (AI extraction)
+    # We do this in a thread to not block the UI if Ollama is slow
+    def process():
+        structured = E.router.route_prompt(raw_text)
+        push_event("basket_routed", {
+            "prompt_id": log["prompt_id"],
+            "structured": structured
+        })
+        print(f"Ecosystem: Intent routed -> {structured.get('intent')}")
+
+    threading.Thread(target=process, daemon=True).start()
+    
+    return json.dumps({"ok": True, "prompt_id": log["prompt_id"]})
 
 @app.route('/judgement/execute', methods=['POST'])
 def execute_judgement():
