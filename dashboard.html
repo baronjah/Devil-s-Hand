@@ -197,10 +197,23 @@
     </div>
 
     <div class="panel">
-        <h2>Active Stories</h2>
+        <h2>Active Stories (5D Timelines)</h2>
         <ul id="stories-list">
             <li>No active stories</li>
         </ul>
+    </div>
+
+    <div class="panel" id="cast-panel">
+        <h2>Cast & Crew (Character Forge)</h2>
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+            <input type="text" id="char-name" placeholder="Name..." style="background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 5px; border-radius: 4px;">
+            <input type="text" id="char-job" placeholder="Job/Occupation..." style="background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 5px; border-radius: 4px;">
+            <input type="text" id="char-goal" placeholder="Current Goal..." style="background: #1a1a30; border: 1px solid #2a2a40; color: white; padding: 5px; border-radius: 4px;">
+            <button onclick="craftCharacter()" style="background: var(--user-blue); color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">👤 CRAFT CHARACTER</button>
+        </div>
+        <div id="cast-list" style="font-size: 0.8rem; border-top: 1px solid #2a2a40; padding-top: 10px; max-height: 150px; overflow-y: auto;">
+            Loading cast...
+        </div>
     </div>
 
     <div class="panel">
@@ -537,6 +550,45 @@
         }
 
         updateBranchList();
+
+        // --- Character Forge API ---
+        function craftCharacter() {
+            const name = document.getElementById('char-name').value;
+            const job = document.getElementById('char-job').value;
+            const goal = document.getElementById('char-goal').value;
+            
+            fetch('http://localhost:8010/character/craft', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name, job: job, goal: goal, archetype: "Creator"})
+            }).then(updateCastList);
+        }
+
+        function updateCastList() {
+            fetch('http://localhost:8010/character/list')
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('cast-list');
+                    list.innerHTML = '';
+                    data.forEach(c => {
+                        const item = document.createElement('div');
+                        item.style.marginBottom = '8px';
+                        item.style.borderBottom = '1px solid #2a2a40';
+                        item.style.paddingBottom = '4px';
+                        item.innerHTML = `
+                            <strong style="color: var(--accent);">${c.name}</strong> [${c.state}]<br>
+                            <span style="color: var(--muted);">Job:</span> ${c.job}<br>
+                            <span style="color: var(--muted);">Goal:</span> ${c.goal}
+                        `;
+                        list.appendChild(item);
+                    });
+                });
+        }
+
+        updateCastList();
+
+        es.addEventListener('character_crafted', e => updateCastList());
+        es.addEventListener('character_updated', e => updateCastList());
 
         es.addEventListener('spirit_action', e => {
             const data = JSON.parse(e.data);

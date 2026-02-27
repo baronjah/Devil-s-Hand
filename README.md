@@ -52,6 +52,12 @@ Time in Devil's Hand is governed by two archetypes:
 - **👼 Angel of Continuation:** Accepts the current state, commits it to history, and advances the timeline.
 - **👹 Demon of the Reset:** Rejects the current reality, triggers a rollback to the previous version, and restarts the current beat.
 
+## 5D Timelines & Character Forge
+"Play a game to program."
+Devil's Hand treats programming as an interactive, multi-dimensional story:
+- **Character Forge:** AI agents (and users) act as "Characters" with specific archetypes, jobs (e.g., "Surgically removes glitches"), and goals.
+- **5D Timelines:** The story exists across multiple dimensions (branches), states, and character perspectives. You can pause the simulation, step in to resolve an issue, fine-tune a character's goal, and resume the play cycle.
+
 ## The Multiverse (Physical Branching)
 Devil's Hand can fork its own reality into new folders on the drive:
 - **Forking:** Clones the core logic and scripts into `D:\devil_s_hand\branches\{name}_{timestamp}\`.

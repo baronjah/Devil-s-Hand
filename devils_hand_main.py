@@ -16,6 +16,7 @@ from dimension_explorer import DimensionExplorer
 from story_runtime import StoryRuntime
 from skill_execution import SkillExecution
 from branch_manager import BranchManager
+from character_forge import CharacterForge
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -36,6 +37,7 @@ class Ecosystem:
         self.story_runtime = StoryRuntime(self)
         self.skill_exec = SkillExecution(self)
         self.branch_manager = BranchManager(self.base_dir)
+        self.character_forge = CharacterForge(self)
         
         self.clients = []
         self.lock = threading.Lock()
@@ -267,6 +269,22 @@ def fork_reality():
 @app.route('/branch/list', methods=['GET'])
 def list_physical_branches():
     return json.dumps(E.branch_manager.list_branches())
+
+@app.route('/character/craft', methods=['POST'])
+def craft_character():
+    data = request.json
+    name = data.get("name", "Unknown")
+    archetype = data.get("archetype", "NPC")
+    job = data.get("job", "Unemployed")
+    goal = data.get("goal", "Survive")
+    appearance = data.get("appearance", "Default")
+    
+    char = E.character_forge.craft_character(name, archetype, job, goal, appearance)
+    return json.dumps({"ok": True, "character": char})
+
+@app.route('/character/list', methods=['GET'])
+def list_characters():
+    return json.dumps(E.character_forge.get_all_characters())
 
 @app.route('/skill/miracle', methods=['POST'])
 def execute_miracle():
