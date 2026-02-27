@@ -239,7 +239,18 @@
             <button onclick="executeSkill('miracle')" style="background: linear-gradient(45deg, var(--grn), var(--cyn)); color: #080810; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 8px;">✨ Miracle It Away</button>
             <button onclick="executeSkill('prevent')" style="background: linear-gradient(45deg, var(--red), var(--ai-purple)); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">🛡️ Demonic Prevention</button>
         </div>
-        <ul id="skills-list">
+        
+        <div id="skill-playback-settings" style="border-top: 1px solid #2a2a40; padding-top: 10px; margin-top: 10px;">
+            <h3>Playback Settings</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="mode-sim" onclick="setSkillMode('simulation')" style="flex: 1; background: var(--accent); color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">SIMULATION</button>
+                <button id="mode-prod" onclick="setSkillMode('production')" style="flex: 1; background: var(--panel-bg); color: white; border: 1px solid var(--border); padding: 5px; border-radius: 4px; cursor: pointer;">REAL</button>
+            </div>
+            <div style="font-size: 0.8rem; margin-bottom: 5px;">Anim Speed: <span id="speed-val">1.0</span>x</div>
+            <input type="range" min="0.1" max="5" step="0.1" value="1.0" style="width: 100%;" oninput="updateSkillSpeed(this.value)">
+        </div>
+
+        <ul id="skills-list" style="margin-top: 10px;">
             <li>Standard Move</li>
             <li>Basic Strike</li>
         </ul>
@@ -538,6 +549,27 @@
                 body: JSON.stringify(body)
             }).then(r => r.json()).then(d => {
                 console.log('Skill Executed:', d);
+            });
+        }
+
+        // --- Skill Playback API ---
+        function setSkillMode(mode) {
+            document.getElementById('mode-sim').style.background = mode === 'simulation' ? 'var(--accent)' : 'var(--panel-bg)';
+            document.getElementById('mode-prod').style.background = mode === 'production' ? 'var(--accent)' : 'var(--panel-bg)';
+            
+            fetch('http://localhost:8010/skill/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: mode})
+            });
+        }
+
+        function updateSkillSpeed(speed) {
+            document.getElementById('speed-val').textContent = speed;
+            fetch('http://localhost:8010/skill/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({speed: speed})
             });
         }
 

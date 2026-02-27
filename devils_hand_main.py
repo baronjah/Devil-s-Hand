@@ -14,6 +14,7 @@ from mode_manager import ModeManager
 from skill_forge import SkillForge
 from dimension_explorer import DimensionExplorer
 from story_runtime import StoryRuntime
+from skill_execution import SkillExecution
 from schemas.swiss_knife_schema import SwissKnifeSchema
 
 app = Flask(__name__)
@@ -32,12 +33,16 @@ class Ecosystem:
         self.skill_forge = SkillForge(self)
         self.explorer = DimensionExplorer(self)
         self.story_runtime = StoryRuntime(self)
-        
-        # Initialize structured state from Swiss Knife Schema
-        self.state = self.save_system.create_empty_state("JSH")
+        self.skill_exec = SkillExecution(self)
         
         self.clients = []
         self.lock = threading.Lock()
+        
+    def push_event(self, event_type, data):
+        """Internal helper to push SSE events."""
+        push_event(event_type, data)
+
+E = Ecosystem()
         self.running = True
         self.status = "initializing"
         
@@ -265,6 +270,15 @@ def execute_prevention():
     result = E.skill_forge.demonic_prevention(target)
     push_event("skill_executed", result)
     return json.dumps({"ok": True, "result": result})
+
+@app.route('/skill/settings', methods=['POST'])
+def update_skill_settings():
+    data = request.json
+    if "mode" in data:
+        E.skill_exec.set_mode(data["mode"])
+    if "speed" in data:
+        E.skill_exec.base_animation_speed = float(data["speed"])
+    return json.dumps({"ok": True})
 
 @app.route('/dimension/roam', methods=['POST'])
 def roam_dimension():
